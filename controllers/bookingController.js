@@ -6,7 +6,6 @@ import stripe from "stripe";
 
 // Function to Check Availablity of Room
 const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
-
   try {
     const bookings = await Booking.find({
       room,
@@ -16,7 +15,6 @@ const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
 
     const isAvailable = bookings.length === 0;
     return isAvailable;
-
   } catch (error) {
     console.error(error.message);
   }
@@ -27,7 +25,11 @@ const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
 export const checkAvailabilityAPI = async (req, res) => {
   try {
     const { room, checkInDate, checkOutDate } = req.body;
-    const isAvailable = await checkAvailability({ checkInDate, checkOutDate, room });
+    const isAvailable = await checkAvailability({
+      checkInDate,
+      checkOutDate,
+      room,
+    });
     res.json({ success: true, isAvailable });
   } catch (error) {
     res.json({ success: false, message: error.message });
@@ -38,7 +40,6 @@ export const checkAvailabilityAPI = async (req, res) => {
 // POST /api/bookings/book
 export const createBooking = async (req, res) => {
   try {
-
     const { room, checkInDate, checkOutDate, guests } = req.body;
 
     const user = req.user._id;
@@ -79,7 +80,7 @@ export const createBooking = async (req, res) => {
     const mailOptions = {
       from: process.env.SENDER_EMAIL,
       to: req.user.email,
-      subject: 'Hotel Booking Details',
+      subject: "Hotel Booking Details",
       html: `
         <h2>Your Booking Details</h2>
         <p>Dear ${req.user.username},</p>
@@ -89,7 +90,9 @@ export const createBooking = async (req, res) => {
           <li><strong>Hotel Name:</strong> ${roomData.hotel.name}</li>
           <li><strong>Location:</strong> ${roomData.hotel.address}</li>
           <li><strong>Date:</strong> ${booking.checkInDate.toDateString()}</li>
-          <li><strong>Booking Amount:</strong>  ${process.env.CURRENCY || '$'} ${booking.totalPrice} /night</li>
+          <li><strong>Booking Amount:</strong>  ${
+            process.env.CURRENCY || "$"
+          } ${booking.totalPrice} /night</li>
         </ul>
         <p>We look forward to welcoming you!</p>
         <p>If you need to make any changes, feel free to contact us.</p>
@@ -99,10 +102,9 @@ export const createBooking = async (req, res) => {
     await transporter.sendMail(mailOptions);
 
     res.json({ success: true, message: "Booking created successfully" });
-
   } catch (error) {
     console.log(error);
-    
+
     res.json({ success: false, message: "Failed to create booking" });
   }
 };
@@ -112,13 +114,14 @@ export const createBooking = async (req, res) => {
 export const getUserBookings = async (req, res) => {
   try {
     const user = req.user._id;
-    const bookings = await Booking.find({ user }).populate("room hotel").sort({ createdAt: -1 });
+    const bookings = await Booking.find({ user })
+      .populate("room hotel")
+      .sort({ createdAt: -1 });
     res.json({ success: true, bookings });
   } catch (error) {
     res.json({ success: false, message: "Failed to fetch bookings" });
   }
 };
-
 
 export const getHotelBookings = async (req, res) => {
   try {
@@ -126,22 +129,28 @@ export const getHotelBookings = async (req, res) => {
     if (!hotel) {
       return res.json({ success: false, message: "No Hotel found" });
     }
-    const bookings = await Booking.find({ hotel: hotel._id }).populate("room hotel user").sort({ createdAt: -1 });
+    const bookings = await Booking.find({ hotel: hotel._id })
+      .populate("room hotel user")
+      .sort({ createdAt: -1 });
     // Total Bookings
     const totalBookings = bookings.length;
     // Total Revenue
-    const totalRevenue = bookings.reduce((acc, booking) => acc + booking.totalPrice, 0);
+    const totalRevenue = bookings.reduce(
+      (acc, booking) => acc + booking.totalPrice,
+      0
+    );
 
-    res.json({ success: true, dashboardData: { totalBookings, totalRevenue, bookings } });
+    res.json({
+      success: true,
+      dashboardData: { totalBookings, totalRevenue, bookings },
+    });
   } catch (error) {
     res.json({ success: false, message: "Failed to fetch bookings" });
   }
 };
 
-
 export const stripePayment = async (req, res) => {
   try {
-
     const { bookingId } = req.body;
 
     const booking = await Booking.findById(bookingId);
@@ -177,8 +186,8 @@ export const stripePayment = async (req, res) => {
       },
     });
     res.json({ success: true, url: session.url });
-
   } catch (error) {
+    console.log(error);
     res.json({ success: false, message: "Payment Failed" });
   }
-}
+};
