@@ -10,8 +10,9 @@ import bookingRouter from "./routes/bookingRoutes.js";
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import connectCloudinary from "./configs/cloudinary.js";
 import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
+import mongoose from "mongoose";
 
-connectDB();
+// connectDB();
 connectCloudinary();
 
 const app = express();
@@ -38,5 +39,16 @@ app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed:", err);
+    process.exit(1);
+  });
+
 console.log("aever working");
