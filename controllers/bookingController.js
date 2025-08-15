@@ -211,3 +211,38 @@ export const getUserBookings = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Get admin dashboard data
+// @route   GET /api/admin/dashboard
+// @access  Private (Admin only)
+export const getAdminDashboardData = async (req, res) => {
+  try {
+    // 1. Fetch all bookings
+    const bookings = await Booking.find()
+      .populate("room", "roomType pricePerNight")
+      .populate("user", "name email")
+      .lean();
+
+    // 2. Calculate total revenue (sum of all paid bookings)
+    const totalRevenue = bookings
+      .filter((b) => b.isPaid)
+      .reduce((sum, booking) => sum + Number(booking.totalPrice), 0);
+
+    // 3. Total bookings count
+    const totalBookings = bookings.length;
+
+    // 4. Return data
+    res.status(200).json({
+      success: true,
+      totalRevenue,
+      totalBookings,
+      bookings,
+    });
+  } catch (error) {
+    console.error("Error fetching admin dashboard data:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error: " + error.message,
+    });
+  }
+};

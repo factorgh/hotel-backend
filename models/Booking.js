@@ -16,7 +16,6 @@ const bookingSchema = new Schema(
     hotel: {
       type: Schema.Types.ObjectId,
       ref: "Hotel",
-      required: true,
     },
     checkInDate: {
       type: Date,

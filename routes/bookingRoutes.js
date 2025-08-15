@@ -9,6 +9,7 @@ import {
   checkAvailabilityAPI,
   paystackPayment,
   verifyPayment,
+  getAdminDashboardData,
 } from "../controllers/bookingController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { verifyPaystackWebhook } from "../controllers/paystackWebhooks.js";
@@ -42,7 +43,22 @@ router.get(
   getBookings
 );
 
+// Get admin dashboard data
+router.get(
+  "/admin/dashboard",
+  (req, res, next) => {
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
+    }
+    next();
+  },
+  getAdminDashboardData
+);
+
 // GET user bookings
+
 router.get("/user", protect, getUserBookings);
 // GET booking by ID
 router.get("/:id", getBookingById);
