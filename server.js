@@ -10,8 +10,6 @@ import authRoutes from "./routes/authRoutes.js";
 import mongoose from "mongoose";
 import morgan from "morgan";
 
-connectDB();
-
 const app = express();
 app.use(cors());
 app.use(express.json());
