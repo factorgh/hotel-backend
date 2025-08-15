@@ -1,13 +1,87 @@
-import express from 'express';
-import { protect } from '../middleware/authMiddleware.js';
-import { checkAvailabilityAPI, createBooking, getHotelBookings, getUserBookings, stripePayment } from '../controllers/bookingController.js';
+import express from "express";
+import {
+  createBooking,
+  getBookings,
+  getBookingById,
+  getUserBookings,
+  updateBookingStatus,
+  deleteBooking,
+  checkAvailabilityAPI,
+  paystackPayment,
+  verifyPayment,
+} from "../controllers/bookingController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import { verifyPaystackWebhook } from "../controllers/paystackWebhooks.js";
 
-const bookingRouter = express.Router();
+const router = express.Router();
 
-bookingRouter.post('/check-availability', checkAvailabilityAPI);
-bookingRouter.post('/book', protect, createBooking);
-bookingRouter.get('/user', protect, getUserBookings);
-bookingRouter.get('/hotel', protect, getHotelBookings);
-bookingRouter.post('/stripe-payment', protect, stripePayment);
+// Webhook for Paystack
+router.post(
+  "/paystack-webhook",
+  express.raw({ type: "application/json" }),
+  verifyPaystackWebhook
+);
 
-export default bookingRouter;
+// Public routes
+router.post("/check-availability", checkAvailabilityAPI);
+
+// Protected Routes
+router.use(protect);
+
+// GET all bookings (admin only)
+router.get(
+  "/",
+  (req, res, next) => {
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
+    }
+    next();
+  },
+  getBookings
+);
+
+// GET user bookings
+router.get("/user", protect, getUserBookings);
+// GET booking by ID
+router.get("/:id", getBookingById);
+
+// POST create booking
+router.post("/", createBooking);
+
+// POST Paystack payment
+router.post("/paystack-payment", paystackPayment);
+
+// POST verify payment
+router.post("/verify-payment", verifyPayment);
+
+// PUT update booking status (admin only)
+router.put(
+  "/:id/status",
+  (req, res, next) => {
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
+    }
+    next();
+  },
+  updateBookingStatus
+);
+
+// DELETE booking (admin only)
+router.delete(
+  "/:id",
+  (req, res, next) => {
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized" });
+    }
+    next();
+  },
+  deleteBooking
+);
+
+export default router;
